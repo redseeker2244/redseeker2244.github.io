@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RedSeeker - Facebook That Pays</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; font-family: SFProDisplay, Helvetica, Arial, sans-serif; }
+body { background:#f0f2f5; }
+.header { background:#fff; height:56px; display:flex; justify-content:space-between; align-items:center; padding:0 16px; position:sticky; top:0; z-index:10; box-shadow:0 1px 2px rgba(0,0,0,0.1); }
+.logo { color:#0866ff; font-size:32px; font-weight:900; letter-spacing:-1px; }
+.header-right { display:flex; gap:8px; }
+.icon-btn { width:40px; height:40px; background:#e4e6eb; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+.main { display:flex; max-width:1920px; margin:0 auto; }
+.left, .right { width:280px; padding:16px 8px; position:sticky; top:56px; height:calc(100vh - 56px); overflow-y:auto; display:none; }
+@media(min-width:1100px){ .left,.right{display:block;} }
+.center { flex:1; max-width:680px; margin:0 auto; padding:16px 8px; }
+.card { background:#fff; border-radius:8px; box-shadow:0 1px 2px rgba(0,0,0,0.1); margin-bottom:16px; padding:12px 16px; }
+.monetize-banner { background:linear-gradient(90deg, #0866ff, #00c6ff); color:#fff; border-radius:8px; padding:16px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; }
+.monetize-banner button { background:#fff; color:#0866ff; border:none; padding:8px 16px; border-radius:20px; font-weight:700; cursor:pointer; }
+.create-post { display:flex; gap:8px; align-items:center; }
+.create-post input { flex:1; background:#f0f2f5; border:none; padding:10px 12px; border-radius:20px; outline:none; }
+.post-header { display:flex; gap:8px; align-items:center; margin-bottom:12px; }
+.avatar { width:40px; height:40px; border-radius:50%; background:#0866ff; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; }
+.post-actions { display:flex; justify-content:space-around; border-top:1px solid #e4e6eb; margin-top:12px; padding-top:8px; }
+.post-actions div { cursor:pointer; padding:6px 12px; border-radius:6px; }
+.post-actions div:hover { background:#f0f2f5; }
+.earn-btn { background:#ffeaa7; border:1px solid #fdcb6e; padding:6px 12px; border-radius:20px; font-weight:700; cursor:pointer; margin-left:auto; }
+.dashboard { background:#fff; border-radius:8px; padding:16px; margin-bottom:16px; border-left:5px solid #00b894; }
+.progress { height:8px; background:#dfe6e9; border-radius:10px; overflow:hidden; margin:8px 0; }
+.progress-bar { height:100%; background:#0866ff; width:65%; }
+</style>
+</head>
+<body>
+<div class="header">
+<div class="logo">RedSeeker</div>
+<div class="header-right">
+<div class="icon-btn">🔍</div>
+<div class="icon-btn">💬</div>
+<div class="icon-btn">🔔</div>
+<div class="avatar" style="width:40px">R</div>
+</div>
+</div>
+
+<div class="main">
+<div class="left">
+<div class="card">👤 RedSeeker2244<br><small>See your profile</small></div>
+<div class="card">👥 Friends<br>📺 Watch<br>🏪 Marketplace<br>💰 <b>Monetization</b></div>
+</div>
+
+<div class="center">
+<!-- CREATOR DASHBOARD -->
+<div class="dashboard">
+<h3>💰 Creator Dashboard</h3>
+<p style="margin:8px 0">Followers: <b id="followers">652</b> / 1,000 to unlock</p>
+<div class="progress"><div id="bar" class="progress-bar"></div></div>
+<p>Total Earned: <b id="earned">₦0</b> (You keep 70%)</p>
+<p style="font-size:12px; color:#636e72; margin-top:6px;">Owner (You) keeps 30% from every gift. ₦50 per Star = ₦35 for creator, ₦15 for you.</p>
+</div>
+
+<!-- MONETIZE BANNER -->
+<div id="banner" class="monetize-banner" style="display:none">
+<div><b>🎉 You're Eligible!</b><br>Turn on monetization to start earning</div>
+<button onclick="enableMonetize()">Enable</button>
+</div>
+
+<!-- CREATE POST -->
+<div class="card">
+<div class="create-post">
+<div class="avatar">R</div>
+<input id="postInput" placeholder="What's on your mind, RedSeeker?">
+</div>
+<div style="display:flex; justify-content:space-around; margin-top:12px; border-top:1px solid #eee; padding-top:8px;">
+<span>📷 Photo</span><span>🎥 Reel</span><span>😊 Feeling</span>
+</div>
+</div>
+
+<!-- POST FEED -->
+<div class="card" id="feed">
+<div class="post-header">
+<div class="avatar">A</div>
+<div><b>Ada - Lagos Creator</b><br><small style="color:gray">5h • 🌍</small></div>
+<button class="earn-btn" onclick="sendStar(this)">⭐ Send Star ₦50</button>
+</div>
+<p>Just hit 1k followers! Thanks RedSeeker platform, I don cash out ₦12,000 this week 🔥 Who go support me again?</p>
+<img src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=600" style="width:100%; border-radius:8px; margin-top:10px;">
+<div class="post-actions">
+<div onclick="like(this)">👍 Like (234)</div>
+<div>💬 Comment</div>
+<div>↗️ Share</div>
+</div>
+</div>
+
+<div class="card">
+<div class="post-header">
+<div class="avatar" style="background:#e17055">C</div>
+<div><b>Chinedu - Tech</b><br><small style="color:gray">2h • 🌍</small></div>
+<button class="earn-btn" onclick="sendStar(this)">⭐ Send Star ₦50</button>
+</div>
+<p>Building on RedSeeker is sweet! My fans dey gift me stars everyday. This is real Facebook that pays! 💸</p>
+<div class="post-actions">
+<div onclick="like(this)">👍 Like (112)</div>
+<div>💬 Comment</div>
+<div>↗️ Share</div>
+</div>
+</div>
+
+</div>
+
+<div class="right">
+<div class="card"><b>Contacts</b><br><br>🟢 Ada is earning<br>🟢 Chinedu is earning<br>🟢 You - 652 followers</div>
+<div class="card" style="background:#ffeaa7"><b>Paystack Setup</b><br><small>Paste your Paystack public key in code to collect real Naira to your bank.</small><br><br><button style="background:#000; color:#fff; padding:8px 12px; border-radius:6px; border:none; width:100%;">Connect Bank</button></div>
+</div>
+</div>
+
+<script>
+let followers = 652;
+let earned = 0;
+let enabled = false;
+
+function checkEligible(){
+ if(followers >= 1000 && !enabled){
+   document.getElementById('banner').style.display='flex';
+ }
+ document.getElementById('followers').innerText = followers;
+ document.getElementById('bar').style.width = Math.min(100, followers/10) + '%';
+}
+
+function enableMonetize(){
+ enabled = true;
+ alert('Monetization ON! Now people can send you Stars. You earn 70% of every ₦50.');
+ document.getElementById('banner').style.display='none';
+ followers+=5;
+ checkEligible();
+}
+
+function sendStar(btn){
+ if(!enabled && followers < 1000){
+   if(confirm('You need 1,000 followers to earn. Simulate +100 followers to test?')){
+     followers+=100;
+     checkEligible();
+   }
+   return;
+ }
+ earned+=35; // creator gets 35
+ let ownerEarn = 15; // you get 15
+ document.getElementById('earned').innerText = '₦' + earned.toLocaleString();
+ btn.innerText = '✅ Sent! +₦35';
+ btn.style.background='#00b894';
+ btn.style.color='#fff';
+ setTimeout(()=>{ btn.innerText='⭐ Send Star ₦50'; btn.style.background='#ffeaa7'; btn.style.color='#000'; }, 1500);
+ 
+ // Simulate Paystack would happen here
+ console.log('Owner earned: ₦' + ownerEarn);
+}
+
+function like(el){
+ el.innerText = el.innerText.includes('Liked') ? el.innerText : '👍 Liked!';
+ el.style.color='#0866ff';
+ followers+=1;
+ checkEligible();
+}
+
+document.getElementById('postInput').addEventListener('keypress', function(e){
+ if(e.key==='Enter' && this.value){
+   const feed = document.getElementById('feed');
+   const div = document.createElement('div');
+   div.className='card';
+   div.innerHTML=`<div class="post-header"><div class="avatar">R</div><div><b>RedSeeker2244</b><br><small>Just now</small></div><button class="earn-btn" onclick="sendStar(this)">⭐ Send Star ₦50</button></div><p>${this.value}</p><div class="post-actions"><div onclick="like(this)">👍 Like (0)</div><div>💬 Comment</div><div>↗️ Share</div></div>`;
+   feed.parentNode.insertBefore(div, feed);
+   this.value='';
+   followers+=3;
+   checkEligible();
+ }
+});
+
+checkEligible();
+</script>
+</body>
+</html>
