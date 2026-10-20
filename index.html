@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RedSeeker - Real Social</title>
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<style>
+body{font-family:Arial;background:#f0f2f5;margin:0}
+.header{background:#1877f2;color:white;padding:15px;text-align:center;font-weight:bold;font-size:20px;position:sticky;top:0;z-index:10}
+.card{background:white;margin:10px auto;max-width:500px;padding:15px;border-radius:10px;box-shadow:0 2px 5px rgba(0,0,0,.1)}
+input,textarea,button{width:100%;padding:12px;margin:6px 0;border-radius:8px;border:1px solid #ddd;box-sizing:border-box}
+button{background:#1877f2;color:white;border:none;font-weight:bold;cursor:pointer}
+button:disabled{background:#ccc}
+.post{border-top:1px solid #eee;padding-top:10px;margin-top:10px}
+.small{color:#65676b;font-size:13px}
+.star-btn{background:#ff9800;margin-top:5px}
+#authDiv{display:block} #appDiv{display:none}
+</style>
+</head>
+<body>
+<div class="header">🔴 RedSeeker - Earn With Posts</div>
+
+<div class="card" id="authDiv">
+<h3>Create Account / Login</h3>
+<input id="nameInput" placeholder="Full Name (for new account)">
+<input id="emailInput" placeholder="Email">
+<input id="passInput" type="password" placeholder="Password">
+<button id="signupBtn">Create Account</button>
+<button id="loginBtn" style="background:#42b72a">Login</button>
+<p class="small">After login, everybody will see your posts LIVE</p>
+<p id="authMsg"></p>
+</div>
+
+<div id="appDiv">
+<div class="card">
+<p>Welcome <b id="userNameDisplay"></b> | <a href="#" id="logoutBtn">Logout</a></p>
+<textarea id="postText" placeholder="What do you seek?"></textarea>
+<button id="postBtn">Post Now</button>
+</div>
+<div id="feed"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, updateDoc, increment, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAnJq1X8O9kjGtXPtm3UyzhbsxT8zNgZ6Q",
+  authDomain: "redseeker2244-31d31.firebaseapp.com",
+  projectId: "redseeker2244-31d31",
+  storageBucket: "redseeker2244-31d31.firebasestorage.app",
+  messagingSenderId: "21235688747",
+  appId: "1:21235688747:web:ae7cdd5ee52f003238916e"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// REPLACE THIS WITH YOUR LIVE KEY WHEN READY
+const PAYSTACK_PUBLIC_KEY = "pk_test_c44ddbba2f0bcdcc1df5dfe4ec2ce38e0a93d8e28";
+
+const authDiv = document.getElementById('authDiv');
+const appDiv = document.getElementById('appDiv');
+
+document.getElementById('signupBtn').onclick = async () => {
+  const name = document.getElementById('nameInput').value;
+  const email = document.getElementById('emailInput').value;
+  const pass = document.getElementById('passInput').value;
+  if(!name || !email || !pass) return alert("Fill all");
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+    await updateProfile(cred.user, {displayName: name});
+    await addDoc(collection(db, "users"), {uid: cred.user.uid, name, email, created: serverTimestamp()});
+  } catch(e){ document.getElementById('authMsg').innerText = e.message; }
+};
+
+document.getElementById('loginBtn').onclick = async () => {
+  const email = document.getElementById('emailInput').value;
+  const pass = document.getElementById('passInput').value;
+  try { await signInWithEmailAndPassword(auth, email, pass); }
+  catch(e){ document.getElementById('authMsg').innerText = e.message; }
+};
+
+document.getElementById('logoutBtn').onclick = () => signOut(auth);
+
+onAuthStateChanged(auth, (user)=>{
+  if(user){
+    authDiv.style.display='none'; appDiv.style.display='block';
+    document.getElementById('userNameDisplay').innerText = user.displayName || user.email;
+    loadFeed();
+  } else {
+    authDiv.style.display='block'; appDiv.style.display='none';
+  }
+});
+
+document.getElementById('postBtn').onclick = async () => {
+  const text = document.getElementById('postText').value;
+  if(!text) return;
+  const user = auth.currentUser;
+  await addDoc(collection(db, "posts"), {
+    text, authorName: user.displayName || user.email, authorId: user.uid,
+    likes: 0, stars: 0, created: serverTimestamp()
+  });
+  document.getElementById('postText').value='';
+};
+
+function loadFeed(){
+  const q = query(collection(db, "posts"), orderBy("created", "desc"));
+  onSnapshot(q, (snap)=>{
+    const feed = document.getElementById('feed'); feed.innerHTML='';
+    snap.forEach(d=>{
+      const p = d.data();
+      const div = document.createElement('div'); div.className='card';
+      div.innerHTML = `
+        <b>${p.authorName}</b> <span class="small">${p.created?.toDate ? p.created.toDate().toLocaleString() : 'just now'}</span>
+        <div class="post">${p.text}</div>
+        <div class="small">❤️ ${p.likes} Likes | ⭐ ${p.stars} Stars</div>
+        <button onclick="window.likePost('${d.id}')">Like ❤️</button>
+        <button class="star-btn" onclick="window.sendStar('${d.id}', '${p.authorName}')">Send Star ₦50 ⭐</button>
+      `;
+      feed.appendChild(div);
+    });
+  });
+}
+
+window.likePost = async (id) => {
+  await updateDoc(doc(db, "posts", id), {likes: increment(1)});
+};
+
+window.sendStar = (postId, authorName) => {
+  let handler = PaystackPop.setup({
+    key: PAYSTACK_PUBLIC_KEY,
+    email: auth.currentUser.email,
+    amount: 5000, // ₦50
+    currency: "NGN",
+    ref: 'RS_'+Math.floor(Math.random()*1000000000),
+    metadata: { postId, authorName, custom_fields: [{display_name: "Platform", variable_name: "platform", value: "RedSeeker"}] },
+    callback: async function(response){
+      // Payment success, update star count
+      await updateDoc(doc(db, "posts", postId), {stars: increment(1)});
+      alert("Star sent! Thanks for supporting " + authorName + ". Ref: " + response.reference);
+    },
+    onClose: function(){ alert("Payment closed"); }
+  });
+  handler.openIframe();
+};
+</script>
+</body>
+</html>
